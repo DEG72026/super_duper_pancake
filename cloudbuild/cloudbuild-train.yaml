@@ -1,0 +1,33 @@
+substitutions:
+  _REGION: europe-west4
+  _PIPELINE_DISPLAY_NAME: iris-decision-tree-training
+
+steps:
+  
+# Install dependencies and compile the Vertex AI pipeline
+  - name: 'python:3.10-slim'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        pip install --upgrade pip
+        pip install -r pipeline/requirements.txt
+        python pipeline/compile_pipeline.py
+
+  
+# Run the compiled Vertex AI pipeline
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      [
+        'ai',
+        'pipeline-jobs',
+        'run',
+        '--region',
+        '${_REGION}',
+        '--display-name',
+        '${_PIPELINE_DISPLAY_NAME}-${BUILD_ID}',
+        '--pipeline-definition-file',
+        'pipeline/iris_decision_tree_pipeline.yaml'
+      ]
+
+timeout: '1200s'

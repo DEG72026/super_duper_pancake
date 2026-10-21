@@ -1,0 +1,49 @@
+substitutions:
+  _REGION: europe-west4
+  _AR_REPO: mlops-repo-group7
+  _UI_SERVICE: iris-ui
+  _UI_IMAGE: iris-ui
+  _API_URL: https://REPLACE-WITH-API-URL
+
+steps:
+  
+# Build UI Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-t',
+        '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_UI_IMAGE}:${BUILD_ID}',
+        '.'
+      ]
+    dir: 'ui'
+
+  
+# Push UI Docker image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_UI_IMAGE}:${BUILD_ID}'
+      ]
+
+  
+# Deploy UI to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      [
+        'run',
+        'deploy',
+        '${_UI_SERVICE}',
+        '--image',
+        '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_UI_IMAGE}:${BUILD_ID}',
+        '--region',
+        '${_REGION}',
+        '--platform',
+        'managed',
+        '--allow-unauthenticated',
+        '--set-env-vars',
+        'PREDICTION_API_URL=${_API_URL}'
+      ]
+
+timeout: '900s'
