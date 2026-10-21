@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Iris classifier</title>
+</head>
+<body>
+    <h1>Iris flower classifier</h1>
+    <p>
+        Enter all measurements in centimetres.
+        For example, enter 5.1 cm rather than 51 mm.
+    </p>
+
+    {% if error %}
+        <p role="alert">{{ error }}</p>
+    {% endif %}
+
+    <form method="post">
+        {% for name, limits in feature_limits.items() %}
+            <p>
+                <label for="{{ name }}">
+                    {{ name.replace("_", " ").capitalize() }} (cm)
+                </label>
+
+                <input
+                    id="{{ name }}"
+                    name="{{ name }}"
+                    type="number"
+                    min="{{ limits[0] }}"
+                    max="{{ limits[1] }}"
+                    step="any"
+                    value="{{ request.form.get(name, '') }}"
+                    aria-describedby="{{ name }}_range"
+                    required
+                >
+
+                <small id="{{ name }}_range">
+                    Allowed range: {{ limits[0] }}–{{ limits[1] }} cm.
+                </small>
+            </p>
+        {% endfor %}
+
+        <button type="submit">Check input</button>
+    </form>
+
+    {% if measurements %}
+        <h2>Received measurements</h2>
+        <ul>
+            {% for name, value in measurements.items() %}
+                <li>
+                    {{ name.replace("_", " ").capitalize() }}:
+                    {{ value }} cm
+                </li>
+            {% endfor %}
+        </ul>
+        <p>The prediction API is not connected yet.</p>
+    {% endif %}
+</body>
+</html>
