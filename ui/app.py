@@ -95,10 +95,14 @@ def parse_measurements(form: Mapping[str, str]) -> dict[str, float]:
     """
     measurements = {}
 
+    # check the limits per feature
     for name, (lower, upper) in FEATURE_LIMITS.items():
+        # make names readable (from sepal-lenght to Sepal lenghth)
         label = name.replace("_", " ").capitalize()
+        # remove surrounding blanks
         raw_value = form.get(name, "").strip()
 
+        # discard empty value
         if not raw_value:
             raise ValueError(f"{label} is required.")
 
@@ -106,17 +110,17 @@ def parse_measurements(form: Mapping[str, str]) -> dict[str, float]:
             value = float(raw_value)
         except ValueError:
             raise ValueError(f"{label} must be a number.") from None
-
+        # when someone tries to bypass the form directly into the flask
         if not math.isfinite(value):
             raise ValueError(f"{label} must be a finite number.")
 
-        # Check the units 
+        # Compare the units to boundaries
         if not lower <= value <= upper:
             raise ValueError(
                 f"{label} must be between {lower:g} and {upper:g} cm. "
                 "Check the units."
             )
-
+        #store accepted value
         measurements[name] = value
 
     return measurements
