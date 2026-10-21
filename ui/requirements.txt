@@ -1,2 +1,3 @@
-Flask
-requests
+Flask     # web form and handles user submissions
+requests  # Sends flower measurements to the prediction API
+gunicorn  # Runs the Flask app inside the Linux container on CloudRun
