@@ -9,7 +9,6 @@ app = Flask(__name__)
 
 # Limits use the full sklearn Iris dataset:
 # observed minimum * 0.8 and observed maximum * 1.2, in centimetres.
-# Share these rules with the API developer.
 FEATURE_LIMITS = {
     "sepal_length": (3.44, 9.48),
     "sepal_width": (1.60, 5.28),
@@ -111,7 +110,7 @@ def parse_measurements(form: Mapping[str, str]) -> dict[str, float]:
         if not math.isfinite(value):
             raise ValueError(f"{label} must be a finite number.")
 
-        # Check the units rather than silently converting suspicious values.
+        # Check the units 
         if not lower <= value <= upper:
             raise ValueError(
                 f"{label} must be between {lower:g} and {upper:g} cm. "
@@ -154,7 +153,7 @@ def home() -> tuple[str, int]:
         except ValueError as exc:
             error = str(exc)
 
-    # Pass the same limits to HTML so browser and server rules agree.
+    # Pass the same limits to HTML IOT have browser and server rules agree.
     html = render_template(
         "index.html",
         feature_limits=FEATURE_LIMITS,
@@ -164,6 +163,25 @@ def home() -> tuple[str, int]:
     status_code = 400 if error else 200
 
     return html, status_code
+
+@app.get("/health")
+def health() -> tuple[dict[str, str], int]:
+    """Report whether the UI server can handle a request.
+
+    This check does not contact the prediction API or load a model.
+
+    Returns:
+        A JSON response identifying the service and HTTP status 200.
+
+    Examples:
+        >>> client = app.test_client()
+        >>> response = client.get("/health")
+        >>> response.status_code
+        200
+        >>> response.get_json()
+        {'service': 'iris-ui', 'status': 'ok'}
+    """
+    return {"service": "iris-ui", "status": "ok"}, 200
 
 
 if __name__ == "__main__":
