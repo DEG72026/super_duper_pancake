@@ -41,7 +41,7 @@
             </p>
         {% endfor %}
 
-        <button type="submit">Check input</button>
+        <button type="submit">Predict species</button>
     </form>
 
     {% if measurements %}
@@ -54,7 +54,10 @@
                 </li>
             {% endfor %}
         </ul>
-        <p>The prediction API is not connected yet.</p>
+        {% if prediction %}
+            <h2>Predicted species</h2>
+            <p>{{ prediction.class_name }} (class {{ prediction.class_id }})</p>
+        {% endif %}
     {% endif %}
 </body>
 </html>
