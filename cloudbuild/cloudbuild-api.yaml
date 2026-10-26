@@ -5,28 +5,7 @@ substitutions:
   _API_IMAGE: iris-api
 
 steps:
-  
-# Optional test step.
-  
-# Uncomment when tests and dependencies are ready.
-  
-# - name: 'python:3.10-slim'
-  
-#   entrypoint: 'bash'
-  
-#   args:
-  
-#     - '-c'
-  
-#     - |
-  
-#       pip install -r api/requirements.txt
-  
-#       pip install pytest
-  
-#       pytest tests/
-
-  
+   
 # Build API Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args:
