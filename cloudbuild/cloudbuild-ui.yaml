@@ -47,3 +47,7 @@ steps:
       ]
 
 timeout: '900s'
+
+# Logging option to fix service account error
+options:
+  logging: CLOUD_LOGGING_ONLY
