@@ -3,7 +3,7 @@ substitutions:
   _AR_REPO: mlops-repo-group7
   _UI_SERVICE: iris-ui
   _UI_IMAGE: iris-ui
-  _API_URL: https://REPLACE-WITH-API-URL
+  _API_URL: https://REPLACE-WITH-API-URL # replace after API deployment
 
 steps:
   
