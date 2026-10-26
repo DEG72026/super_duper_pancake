@@ -1,0 +1,5 @@
+# Needed to compile and submit the pipeline (laptop or Cloud Build).
+# The training packages (scikit-learn, pandas, ...) are installed inside each
+# pipeline step on Vertex AI, see PACKAGES in iris_pipeline.py.
+kfp>=2.7,<3
+google-cloud-aiplatform>=1.60
