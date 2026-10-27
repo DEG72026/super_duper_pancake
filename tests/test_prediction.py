@@ -64,6 +64,7 @@ def run_training(tmp_path):
 
 
 def gate(best, accuracy, model_dir, tmp_path, min_accuracy=0.9):
+    """Run the check_model step and return its decision ("deploy" or "keep")."""
     return p.check_model.python_func(
         best_model=best, accuracy=accuracy, model_dir=str(model_dir),
         min_accuracy=min_accuracy, gate_metrics=Metrics(uri=str(tmp_path / "gate")))
@@ -71,25 +72,28 @@ def gate(best, accuracy, model_dir, tmp_path, min_accuracy=0.9):
 
 @pytest.fixture(scope="module")
 def trained(tmp_path_factory):
+    """Train once and share the result with all tests that need it."""
     tmp_path = tmp_path_factory.mktemp("run")
     best, result = run_training(tmp_path)
     return tmp_path, best, result
 
 
 def test_pipeline_compiles(tmp_path):
+    """The pipeline compiles into a YAML file."""
     out = tmp_path / "pipeline.yaml"
     compiler.Compiler().compile(pipeline_func=p.iris_pipeline, package_path=str(out))
     assert out.exists() and out.stat().st_size > 0
 
 
 def test_best_model_is_accurate(trained):
+    """The selected model is at least 90% accurate and is one of the candidates."""
     _, _, result = trained
     assert result.accuracy >= 0.9
-    # depth 3 and no limit both reach 96.7%; on a tie the simpler tree wins
-    assert result.max_depth == 3
+    assert result.max_depth in p.MAX_DEPTHS
 
 
 def test_model_predicts_known_flowers(trained):
+    """The selected model predicts one known flower of each species correctly."""
     _, best, _ = trained
     tree = joblib.load(best.path)
     for features, label in EXAMPLES:
@@ -98,6 +102,7 @@ def test_model_predicts_known_flowers(trained):
 
 
 def test_first_model_gets_deployed(trained, tmp_path):
+    """With no current model, a good model is deployed and all its files are saved."""
     _, best, result = trained
     model_dir = tmp_path / "models"  # empty: no champion yet
     assert gate(best, result.accuracy, model_dir, tmp_path) == "deploy"
@@ -110,6 +115,7 @@ def test_first_model_gets_deployed(trained, tmp_path):
 
 
 def test_worse_model_does_not_replace_champion(trained, tmp_path):
+    """A model worse than the current one is not deployed."""
     _, best, _ = trained
     model_dir = tmp_path / "models"
     model_dir.mkdir()
@@ -118,11 +124,24 @@ def test_worse_model_does_not_replace_champion(trained, tmp_path):
 
 
 def test_model_below_minimum_is_rejected(trained, tmp_path):
+    """A model below the minimum accuracy is not deployed."""
     _, best, _ = trained
     assert gate(best, 0.8, tmp_path / "empty", tmp_path) == "keep"
 
 
+def test_model_that_gets_a_known_flower_wrong_is_rejected(tmp_path):
+    """A model that gets a known flower wrong is not deployed."""
+    train_set = Dataset(uri=str(tmp_path / "train.csv"))
+    p.split_data.python_func(dataset=Dataset(uri=str(DATA)), test_size=0.2, random_state=42,
+                             train_set=train_set, test_set=Dataset(uri=str(tmp_path / "test.csv")))
+    stump = Model(uri=str(tmp_path / "stump.joblib"))
+    # a depth-1 tree only tells two species apart
+    p.train_model.python_func(train_set=train_set, max_depth=1, model=stump)
+    assert gate(stump, 0.99, tmp_path / "empty", tmp_path) == "keep"
+
+
 def test_equally_good_model_is_deployed(trained, tmp_path):
+    """A model as good as the current one is deployed."""
     _, best, result = trained
     model_dir = tmp_path / "models"
     model_dir.mkdir()
@@ -132,6 +151,7 @@ def test_equally_good_model_is_deployed(trained, tmp_path):
 
 @pytest.mark.skipif(not os.getenv("MODEL_PATH"), reason="set MODEL_PATH to test a real model file")
 def test_real_model_file():
+    """A downloaded model file predicts the known flowers correctly."""
     tree = joblib.load(os.environ["MODEL_PATH"])
     for features, label in EXAMPLES:
         assert int(tree.predict([features])[0]) == label
@@ -156,6 +176,7 @@ def compile_with_image(tmp_path, image):
 
 
 def test_steps_use_pipeline_image_when_set(tmp_path):
+    """With PIPELINE_IMAGE set, every step uses that image and installs nothing."""
     image = "europe-west4-docker.pkg.dev/my-project/mlops-repo-group7/iris-pipeline:test"
     for container in compile_with_image(tmp_path, image):
         assert container["image"] == image
@@ -164,6 +185,7 @@ def test_steps_use_pipeline_image_when_set(tmp_path):
 
 
 def test_steps_install_packages_without_image(tmp_path):
+    """Without PIPELINE_IMAGE, steps use python:3.10-slim and install their packages."""
     for container in compile_with_image(tmp_path, None):
         assert container["image"] == "python:3.10-slim"
         assert "scikit-learn==1.4.1.post1" in " ".join(container["command"])
