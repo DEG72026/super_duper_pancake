@@ -5,6 +5,11 @@ substitutions:
   _API_IMAGE: iris-api
 
 steps:
+
+# Copy trained model from Cloud Storage
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: ['cp', 'gs://group7-iris-models/model/model.joblib', 'api/model.pkl']
+   
    
 # Build API Docker image
   - name: 'gcr.io/cloud-builders/docker'
