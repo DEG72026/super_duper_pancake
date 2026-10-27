@@ -10,6 +10,16 @@ steps:
   - name: 'gcr.io/cloud-builders/gsutil'
     args: ['cp', 'gs://group7-iris-models/model/model.joblib', 'api/model.pkl']
    
+
+# Run unit tests before building
+  - name: 'python:3.10-slim'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        pip install -r tests/requirements.txt
+        pytest tests/
+   
    
 # Build API Docker image
   - name: 'gcr.io/cloud-builders/docker'
