@@ -135,3 +135,35 @@ def test_real_model_file():
     tree = joblib.load(os.environ["MODEL_PATH"])
     for features, label in EXAMPLES:
         assert int(tree.predict([features])[0]) == label
+
+
+def compile_with_image(tmp_path, image):
+    """Compile the pipeline in a fresh Python process with or without PIPELINE_IMAGE."""
+    import subprocess
+
+    import yaml
+
+    out = tmp_path / "pipeline.yaml"
+    env = {k: v for k, v in os.environ.items() if k != "PIPELINE_IMAGE"}
+    if image:
+        env["PIPELINE_IMAGE"] = image
+    code = ("import sys; sys.path.insert(0, 'pipeline'); from kfp import compiler; "
+            "import iris_pipeline as p; "
+            f"compiler.Compiler().compile(p.iris_pipeline, r'{out}')")
+    subprocess.run([sys.executable, "-c", code], cwd=REPO, env=env, check=True)
+    executors = yaml.safe_load(out.read_text())["deploymentSpec"]["executors"]
+    return [e["container"] for e in executors.values()]
+
+
+def test_steps_use_pipeline_image_when_set(tmp_path):
+    image = "europe-west4-docker.pkg.dev/my-project/mlops-repo-group7/iris-pipeline:test"
+    for container in compile_with_image(tmp_path, image):
+        assert container["image"] == image
+        # nothing is installed when the step starts
+        assert "pip install" not in " ".join(container["command"])
+
+
+def test_steps_install_packages_without_image(tmp_path):
+    for container in compile_with_image(tmp_path, None):
+        assert container["image"] == "python:3.10-slim"
+        assert "scikit-learn==1.4.1.post1" in " ".join(container["command"])

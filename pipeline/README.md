@@ -55,6 +55,7 @@ model is always saved.
 | `run_pipeline.py` | copies the YAML to the pipeline repository bucket and starts a run on Vertex AI |
 | `run_local.py` | runs the whole pipeline on your own computer (no Google Cloud) |
 | `requirements.txt` | packages to compile and start the pipeline |
+| `Dockerfile` | image with all packages for the pipeline steps (version 3) |
 | `../tests/test_prediction.py` | tests for the steps, the quality gate and the model's predictions |
 
 ## Run it
@@ -74,6 +75,22 @@ python pipeline/compile_pipeline.py
 python pipeline/run_local.py
 ```
 
+**Same, but as inside the pipeline image** (a few seconds; steps install
+nothing, so it fails if a step needs a package that isn't in `pipeline/Dockerfile`):
+```bash
+pip install -r tests/requirements.txt
+python pipeline/run_local.py --image-mode
+```
+
+**Test the real image on Vertex AI by hand** (Cloud Shell, before the trigger exists):
+```bash
+IMAGE=europe-west4-docker.pkg.dev/<PROJECT_ID>/mlops-repo-group7/iris-pipeline:manual
+gcloud builds submit pipeline/ --tag $IMAGE --region europe-west4
+PIPELINE_IMAGE=$IMAGE python pipeline/compile_pipeline.py
+python pipeline/run_pipeline.py --project <PROJECT_ID>
+git checkout pipeline/iris_decision_tree_pipeline.yaml   # keep the Git YAML without the image
+```
+
 **On Vertex AI** (e.g. from Cloud Shell):
 ```bash
 pip install -r pipeline/requirements.txt
@@ -90,16 +107,35 @@ turns it on, `--wait` waits until the run is done.
 **Whenever `iris_pipeline.py` changes, run `compile_pipeline.py` again and commit
 the new YAML too.**
 
+## Pipeline image (version 3)
+
+All steps can run in one pre-built image (`pipeline/Dockerfile`) with pandas,
+scikit-learn etc. already installed, so steps start right away instead of
+installing packages first (in-line components with a custom image, Lab 4 slide 11).
+
+- `PIPELINE_IMAGE` set when compiling → all steps use that image, nothing is installed
+- not set (laptop, the YAML in Git) → `python:3.10-slim`, each step installs its packages
+
+Cloud Build builds the image, pushes it to Artifact Registry and compiles the
+pipeline with `PIPELINE_IMAGE` pointing to it. So CI/CD now also builds the
+training pipeline component, as the assignment asks. Run locally, the whole
+pipeline took 7 seconds in this mode instead of about 4 minutes.
+
+The copy of each run's YAML in `gs://group7-iris-models/pipelines/` is the one
+that was really used (with the image), the YAML in Git is the version without it.
+
 ## Suggested `cloudbuild/cloudbuild-train.yaml`
 
 ```yaml
 substitutions:
   _REGION: europe-west4
+  _AR_REPO: mlops-repo-group7
   _PIPELINE_ROOT: gs://group7-iris-models/pipeline_root
 
 steps:
-  # test the pipeline code first; stop if something is broken
-  - name: 'python:3.10-slim'
+  # 1. test the pipeline code; the build stops here if a test fails
+  - id: test
+    name: 'python:3.10-slim'
     entrypoint: 'bash'
     args:
       - '-c'
@@ -107,31 +143,47 @@ steps:
         pip install -r tests/requirements.txt
         pytest tests/
 
-  # compile, store the YAML in the pipeline repository and start the run
-  - name: 'python:3.10-slim'
+  # 2. build the image for the pipeline steps
+  - id: build-pipeline-image
+    name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/iris-pipeline:${BUILD_ID}', 'pipeline']
+
+  # 3. push it to Artifact Registry
+  - id: push-pipeline-image
+    name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/iris-pipeline:${BUILD_ID}']
+
+  # 4. compile with that image, store the YAML and start the run on Vertex AI
+  - id: compile-and-run
+    name: 'python:3.10-slim'
     entrypoint: 'bash'
+    env:
+      - 'PIPELINE_IMAGE=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/iris-pipeline:${BUILD_ID}'
     args:
       - '-c'
       - |
         pip install -r pipeline/requirements.txt
         python pipeline/compile_pipeline.py
-        python pipeline/run_pipeline.py --project $PROJECT_ID --region ${_REGION} --pipeline-root ${_PIPELINE_ROOT}
+        python pipeline/run_pipeline.py --project ${PROJECT_ID} --region ${_REGION} --pipeline-root ${_PIPELINE_ROOT}
 
-timeout: '1200s'
+timeout: '1800s'
 options:
   logging: CLOUD_LOGGING_ONLY
 ```
 
-Permissions: the Cloud Build service account needs **Vertex AI User**,
-**Service Account User** and write access to the model bucket (for the
-pipeline repository). The account the pipeline runs as (by default the Compute
-Engine default service account) needs read access to the data bucket and
-write access to the model bucket.
+Trigger: on pushes to `main` that change `pipeline/**`, `tests/**` or `data/**`.
+
+Permissions:
+- Cloud Build service account: **Vertex AI User**, **Service Account User**,
+  **Artifact Registry Writer**, and write access to the model bucket (pipeline repository)
+- the account the pipeline runs as (by default the Compute Engine default
+  service account): **Artifact Registry Reader** (to pull the image), read access
+  to the data bucket and write access to the model bucket
 
 ## Not done (ideas for the report)
 
-- **Own Docker image for the steps** (Lab 5): each step now installs its
-  packages when it starts. A pre-built image would make steps start faster,
-  but it's optional for the assignment and needs an extra Cloud Build step.
+- **Fully containerized components** (Lab 5): each step as its own script and
+  image (`@dsl.container_component`), so steps can be tested and reused on
+  their own. We use one shared image for in-line components instead.
 - **Real hyperparameter tuning** instead of four fixed depths.
 - **Scheduled retraining** (Cloud Scheduler) or retraining when new data arrives.

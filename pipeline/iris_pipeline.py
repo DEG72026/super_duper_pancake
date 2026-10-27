@@ -1,4 +1,4 @@
-"""Vertex AI training pipeline for the Iris Decision Tree (version 2).
+"""Vertex AI training pipeline for the Iris Decision Tree (version 3).
 
 Based on Renske's local script (DecisionTreeModel.py), split into steps:
 
@@ -12,6 +12,7 @@ On Vertex AI our buckets are mounted under /gcs/, so
 gs://group7-iris-models/model can be used as the folder /gcs/group7-iris-models/model.
 """
 
+import os
 from typing import NamedTuple
 
 from kfp import dsl
@@ -19,7 +20,6 @@ from kfp.dsl import Dataset, Input, Metrics, Model, Output
 
 # Same versions as the API (api/requirements.txt), otherwise the API
 # might not be able to load the model we save.
-BASE_IMAGE = "python:3.10-slim"
 PACKAGES = [
     "pandas==2.2.2",
     "numpy==1.26.4",
@@ -27,13 +27,25 @@ PACKAGES = [
     "joblib==1.3.2",
 ]
 
+# Which container image the steps run in:
+# - PIPELINE_IMAGE set (Cloud Build does this): our own image from
+#   pipeline/Dockerfile with everything pre-installed, so steps start
+#   right away without installing anything.
+# - not set (laptop, or before the image exists): a plain Python image,
+#   and each step installs PACKAGES when it starts.
+PIPELINE_IMAGE = os.getenv("PIPELINE_IMAGE")
+if PIPELINE_IMAGE:
+    STEP_SETTINGS = {"base_image": PIPELINE_IMAGE, "install_kfp_package": False}
+else:
+    STEP_SETTINGS = {"base_image": "python:3.10-slim", "packages_to_install": PACKAGES}
+
 # Tree depths we compare. 0 means no depth limit (max_depth=None),
 # because a pipeline parameter can't be None.
 MAX_DEPTHS = [2, 3, 4, 0]
 
 
 # Step 1: read the csv from the data bucket and check it looks right
-@dsl.component(base_image=BASE_IMAGE, packages_to_install=PACKAGES)
+@dsl.component(**STEP_SETTINGS)
 def load_data(data_path: str, dataset: Output[Dataset]):
     import pandas as pd
 
@@ -53,7 +65,7 @@ def load_data(data_path: str, dataset: Output[Dataset]):
 
 
 # Step 2: 80/20 split, stratified, same settings as Renske's script
-@dsl.component(base_image=BASE_IMAGE, packages_to_install=PACKAGES)
+@dsl.component(**STEP_SETTINGS)
 def split_data(
     dataset: Input[Dataset],
     test_size: float,
@@ -74,7 +86,7 @@ def split_data(
 
 
 # Step 3: train one tree (this step runs once for every depth)
-@dsl.component(base_image=BASE_IMAGE, packages_to_install=PACKAGES)
+@dsl.component(**STEP_SETTINGS)
 def train_model(train_set: Input[Dataset], max_depth: int, model: Output[Model]):
     import joblib
     import pandas as pd
@@ -95,7 +107,7 @@ def train_model(train_set: Input[Dataset], max_depth: int, model: Output[Model])
 
 
 # Step 4: accuracy on the test set (also runs once per depth)
-@dsl.component(base_image=BASE_IMAGE, packages_to_install=PACKAGES)
+@dsl.component(**STEP_SETTINGS)
 def evaluate_model(
     model: Input[Model],
     test_set: Input[Dataset],
@@ -121,7 +133,7 @@ def evaluate_model(
 
 # Step 5: keep the most accurate tree. On a tie we keep the simpler
 # (less deep) tree because it's less likely to overfit.
-@dsl.component(base_image=BASE_IMAGE, packages_to_install=PACKAGES)
+@dsl.component(**STEP_SETTINGS)
 def select_best_model(
     model_d2: Input[Model],
     model_d3: Input[Model],
@@ -163,7 +175,7 @@ def select_best_model(
 #   - its accuracy is at least as good as the champion's
 #   - it gets three known example flowers right
 # Returns "deploy" or "keep". save_model only runs on "deploy".
-@dsl.component(base_image=BASE_IMAGE, packages_to_install=PACKAGES)
+@dsl.component(**STEP_SETTINGS)
 def check_model(
     best_model: Input[Model],
     accuracy: float,
@@ -215,7 +227,7 @@ def check_model(
 #   model_dir/model.joblib            -> always the current model (API reads this)
 #   model_dir/metrics.json            -> its accuracy, used by the next check_model
 #   model_dir/versions/model-<time>   -> a copy of every model we deployed
-@dsl.component(base_image=BASE_IMAGE, packages_to_install=PACKAGES)
+@dsl.component(**STEP_SETTINGS)
 def save_model(best_model: Input[Model], model_dir: str, accuracy: float, max_depth: int) -> str:
     import json
     import os
