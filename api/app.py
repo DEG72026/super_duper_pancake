@@ -62,7 +62,7 @@ def load_model():
     else:
             print(f"Warning: Model file not found at {MODEL_PATH}. Running in mock prediction mode.")
 
-@app.get("/health", status_code=status.HTTP_200_OK)
+'''@app.get("/health", status_code=status.HTTP_200_OK)
 def health_check():
     """Health check endpoint to verify service status."""
     return {
@@ -70,7 +70,15 @@ def health_check():
         "model_loaded": model is not None,
         "model_version": model_info.get("version"),
         "model_accuracy": model_info.get("accuracy"),
+    }'''
+@app.get("/health")
+def health_check():
+    """Health check endpoint to verify service status."""
+    return {
+        "status": "healthy" if model is not None else "degraded",
+        "model_loaded": model is not None
     }
+
 
 @app.post("/predict", status_code=status.HTTP_200_OK)
 def predict(payload: IrisFeatures):
