@@ -7,8 +7,9 @@ It validates the input, displays the accepted measurements and sends valid
 measurements to the prediction API. The predicted species is displayed when
 the API returns a valid response.
 
-The API connection has been tested locally. Real model predictions and the
-complete cloud deployment have not yet been verified.
+The API connection has been tested locally and through the deployed UI.
+The deployed API reports that the model is loaded. Three reference examples,
+one per Iris class, returned the expected species.
 
 ## Input validation
 
@@ -62,6 +63,10 @@ Open http://127.0.0.1:5001.
 
 ## Build and run with Docker
 
+Before building the API locally, ensure api/model.pkl contains the trained model.
+Cloud Build downloads this file automatically; a local Docker build does not.
+
+
 Run from the repository root:
 
 ```powershell
@@ -101,8 +106,9 @@ docker stop iris-api-test
 The UI should display an API error and preserve the submitted measurements.
 Restart the API using the same `docker run` command when needed.
 
-The reviewed local API returns a fixed `setosa` response when no model is loaded.
-This verifies the connection and display, but does not verify model predictions.
+Initial local integration checks used the API's fixed setosa fallback response.
+These checked communication and display only. Subsequent deployed checks used
+the loaded model and returned the expected species for three reference examples.
 
 ## Run doctests
 
@@ -132,14 +138,11 @@ live HTTP communication.
 - Stopping the local API produced the expected error and preserved the input.
 - Dependencies pinned to the versions from the tested image.
 
-## Remaining integration work
+## Deployed application verification
 
-- Verify real predictions from the trained model; the local test used the API's
-  fixed fallback response.
-- Resolve access to the deployed API with Himey/Charlotte. At the time of testing,
-  opening its `/health` endpoint returned `Forbidden`.
-- Configure the actual API base URL in the UI's Cloud Run environment.
-- Coordinate Cloud Build and Cloud Run deployment with Charlotte.
-- Test the complete deployed application, including API authentication if required.
-
-The current UI does not send an authentication token to the API.
+- The deployed API health endpoint reports `model_loaded: true`.
+- The deployed UI successfully communicates with the prediction API.
+- Three reference examples, one per Iris class, returned the expected species:
+  setosa, versicolor and virginica.
+- These checks verify the deployed prediction flow; model accuracy is
+  evaluated separately in the training pipeline.
