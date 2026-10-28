@@ -2,6 +2,7 @@ import os
 import joblib
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
+from google.cloud import storage
 
 app = FastAPI(
     title="Iris Classification API",
@@ -47,20 +48,28 @@ CLASS_MAPPING = {
 }
 
 # Load local model 
-MODEL_PATH = os.getenv("MODEL_PATH", "model.pkl")
+from google.cloud import storage
+
+MODEL_PATH = "model.joblib"
+BUCKET_NAME = "group7-iris-models"
+GCS_BLOB_PATH = "model/model.joblib"
 model = None
 
 @app.on_event("startup")
 def load_model():
     global model
-    if os.path.exists(MODEL_PATH):
-        try:
-            model = joblib.load(MODEL_PATH)
-            print(f"Loaded model successfully from {MODEL_PATH}")
-        except Exception as e:
-            print(f"Failed to load model: {e}")
-    else:
-            print(f"Warning: Model file not found at {MODEL_PATH}. Running in mock prediction mode.")
+    try:
+        # Download model from Pranav's GCS bucket
+        client = storage.Client()
+        bucket = client.bucket(BUCKET_NAME)
+        blob = bucket.blob(GCS_BLOB_PATH)
+        blob.download_to_filename(MODEL_PATH)
+        
+        model = joblib.load(MODEL_PATH)
+        print(f"Loaded model successfully from GCS ({BUCKET_NAME}/{GCS_BLOB_PATH})")
+    except Exception as e:
+        print(f"Failed to load model from GCS: {e}")
+        model = None
 
 '''@app.get("/health", status_code=status.HTTP_200_OK)
 def health_check():
