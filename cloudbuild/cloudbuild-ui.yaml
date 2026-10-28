@@ -8,6 +8,15 @@ substitutions:
 
 steps:
   
+# Run the UI doctests
+  - name: 'python:3.12-slim'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        pip install -r ui/requirements.txt pytest
+        python -m pytest --doctest-modules ui/app.py
+
 # Build UI Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args:
