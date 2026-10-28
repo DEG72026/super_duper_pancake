@@ -1,0 +1,6 @@
+# Needed to compile and submit the pipeline (laptop or Cloud Build).
+# The training packages (scikit-learn, pandas, ...) are in the pipeline
+# image (pipeline/Dockerfile) or installed by each step, see iris_pipeline.py.
+# kfp is pinned to the same version as in pipeline/Dockerfile.
+kfp==2.17.3
+google-cloud-aiplatform>=1.60

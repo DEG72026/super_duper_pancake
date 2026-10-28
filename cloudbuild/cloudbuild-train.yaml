@@ -1,33 +1,46 @@
 substitutions:
   _REGION: europe-west4
-  _PIPELINE_DISPLAY_NAME: iris-decision-tree-training
+  _AR_REPO: mlops-repo-group7
+  _PIPELINE_ROOT: gs://group7-iris-models/pipeline_root
 
 steps:
-  
-# Install dependencies and compile the Vertex AI pipeline
-  - name: 'python:3.10-slim'
+
+# 1. Test the pipeline code; the build stops here if a test fails
+  - id: test
+    name: 'python:3.10-slim'
     entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        pip install -r tests/requirements.txt
+        pytest tests/
+
+# 2. Build the image the pipeline steps run in
+  - id: build-pipeline-image
+    name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/iris-pipeline:${BUILD_ID}', 'pipeline']
+
+# 3. Push it to Artifact Registry
+  - id: push-pipeline-image
+    name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/iris-pipeline:${BUILD_ID}']
+
+# 4. Compile the pipeline with that image, store the YAML and start the run on Vertex AI
+  - id: compile-and-run
+    name: 'python:3.10-slim'
+    entrypoint: 'bash'
+    env:
+      - 'PIPELINE_IMAGE=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/iris-pipeline:${BUILD_ID}'
     args:
       - '-c'
       - |
         pip install --upgrade pip
         pip install -r pipeline/requirements.txt
         python pipeline/compile_pipeline.py
+        python pipeline/run_pipeline.py --project ${PROJECT_ID} --region ${_REGION} --pipeline-root ${_PIPELINE_ROOT}
 
-  
-# Run the compiled Vertex AI pipeline
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args:
-      [
-        'ai',
-        'pipeline-jobs',
-        'run',
-        '--region',
-        '${_REGION}',
-        '--display-name',
-        '${_PIPELINE_DISPLAY_NAME}-${BUILD_ID}',
-        '--pipeline-definition-file',
-        'pipeline/iris_decision_tree_pipeline.yaml'
-      ]
+timeout: '1800s'
 
-timeout: '1200s'
+# Logging option to fix service account error
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -1,0 +1,1194 @@
+# PIPELINE DEFINITION
+# Name: iris-decision-tree-training
+# Description: Trains Decision Trees on Iris, checks the best one and saves it for the API.
+# Inputs:
+#    data_path: str [Default: '/gcs/group7-iris-data/iris.csv']
+#    min_accuracy: float [Default: 0.9]
+#    model_dir: str [Default: '/gcs/group7-iris-models/model']
+#    random_state: int [Default: 42.0]
+#    test_size: float [Default: 0.2]
+components:
+  comp-check-model:
+    executorLabel: exec-check-model
+    inputDefinitions:
+      artifacts:
+        best_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        accuracy:
+          parameterType: NUMBER_DOUBLE
+        min_accuracy:
+          parameterType: NUMBER_DOUBLE
+        model_dir:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        gate_metrics:
+          artifactType:
+            schemaTitle: system.Metrics
+            schemaVersion: 0.0.1
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-condition-1:
+    dag:
+      tasks:
+        save-model:
+          cachingOptions: {}
+          componentRef:
+            name: comp-save-model
+          inputs:
+            artifacts:
+              best_model:
+                componentInputArtifact: pipelinechannel--select-best-model-best_model
+            parameters:
+              accuracy:
+                componentInputParameter: pipelinechannel--select-best-model-accuracy
+              max_depth:
+                componentInputParameter: pipelinechannel--select-best-model-max_depth
+              model_dir:
+                componentInputParameter: pipelinechannel--model_dir
+          taskInfo:
+            name: save-model
+    inputDefinitions:
+      artifacts:
+        pipelinechannel--select-best-model-best_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        pipelinechannel--check-model-Output:
+          parameterType: STRING
+        pipelinechannel--model_dir:
+          parameterType: STRING
+        pipelinechannel--select-best-model-accuracy:
+          parameterType: NUMBER_DOUBLE
+        pipelinechannel--select-best-model-max_depth:
+          parameterType: NUMBER_INTEGER
+  comp-evaluate-model:
+    executorLabel: exec-evaluate-model
+    inputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        test_set:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        max_depth:
+          parameterType: NUMBER_INTEGER
+    outputDefinitions:
+      artifacts:
+        metrics:
+          artifactType:
+            schemaTitle: system.Metrics
+            schemaVersion: 0.0.1
+      parameters:
+        Output:
+          parameterType: NUMBER_DOUBLE
+  comp-evaluate-model-2:
+    executorLabel: exec-evaluate-model-2
+    inputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        test_set:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        max_depth:
+          parameterType: NUMBER_INTEGER
+    outputDefinitions:
+      artifacts:
+        metrics:
+          artifactType:
+            schemaTitle: system.Metrics
+            schemaVersion: 0.0.1
+      parameters:
+        Output:
+          parameterType: NUMBER_DOUBLE
+  comp-evaluate-model-3:
+    executorLabel: exec-evaluate-model-3
+    inputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        test_set:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        max_depth:
+          parameterType: NUMBER_INTEGER
+    outputDefinitions:
+      artifacts:
+        metrics:
+          artifactType:
+            schemaTitle: system.Metrics
+            schemaVersion: 0.0.1
+      parameters:
+        Output:
+          parameterType: NUMBER_DOUBLE
+  comp-evaluate-model-4:
+    executorLabel: exec-evaluate-model-4
+    inputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        test_set:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        max_depth:
+          parameterType: NUMBER_INTEGER
+    outputDefinitions:
+      artifacts:
+        metrics:
+          artifactType:
+            schemaTitle: system.Metrics
+            schemaVersion: 0.0.1
+      parameters:
+        Output:
+          parameterType: NUMBER_DOUBLE
+  comp-load-data:
+    executorLabel: exec-load-data
+    inputDefinitions:
+      parameters:
+        data_path:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-save-model:
+    executorLabel: exec-save-model
+    inputDefinitions:
+      artifacts:
+        best_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        accuracy:
+          parameterType: NUMBER_DOUBLE
+        max_depth:
+          parameterType: NUMBER_INTEGER
+        model_dir:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-select-best-model:
+    executorLabel: exec-select-best-model
+    inputDefinitions:
+      artifacts:
+        model_d2:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        model_d3:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        model_d4:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        model_dnone:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        acc_d2:
+          parameterType: NUMBER_DOUBLE
+        acc_d3:
+          parameterType: NUMBER_DOUBLE
+        acc_d4:
+          parameterType: NUMBER_DOUBLE
+        acc_dnone:
+          parameterType: NUMBER_DOUBLE
+    outputDefinitions:
+      artifacts:
+        best_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        accuracy:
+          parameterType: NUMBER_DOUBLE
+        max_depth:
+          parameterType: NUMBER_INTEGER
+  comp-split-data:
+    executorLabel: exec-split-data
+    inputDefinitions:
+      artifacts:
+        dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        random_state:
+          parameterType: NUMBER_INTEGER
+        test_size:
+          parameterType: NUMBER_DOUBLE
+    outputDefinitions:
+      artifacts:
+        test_set:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        train_set:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-train-model:
+    executorLabel: exec-train-model
+    inputDefinitions:
+      artifacts:
+        train_set:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        max_depth:
+          parameterType: NUMBER_INTEGER
+    outputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+  comp-train-model-2:
+    executorLabel: exec-train-model-2
+    inputDefinitions:
+      artifacts:
+        train_set:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        max_depth:
+          parameterType: NUMBER_INTEGER
+    outputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+  comp-train-model-3:
+    executorLabel: exec-train-model-3
+    inputDefinitions:
+      artifacts:
+        train_set:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        max_depth:
+          parameterType: NUMBER_INTEGER
+    outputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+  comp-train-model-4:
+    executorLabel: exec-train-model-4
+    inputDefinitions:
+      artifacts:
+        train_set:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        max_depth:
+          parameterType: NUMBER_INTEGER
+    outputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+deploymentSpec:
+  executors:
+    exec-check-model:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - check_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.2'\
+          \ 'numpy==1.26.4' 'scikit-learn==1.4.1.post1' 'joblib==1.3.2'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.3' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef check_model(\n    best_model: Input[Model],\n    accuracy: float,\n\
+          \    model_dir: str,\n    min_accuracy: float,\n    gate_metrics: Output[Metrics],\n\
+          ) -> str:\n    import json\n    import os\n\n    import joblib\n\n    tree\
+          \ = joblib.load(best_model.path)\n\n    # one typical flower per species\
+          \ (taken from the Iris data set)\n    examples = [\n        ([5.1, 3.5,\
+          \ 1.4, 0.2], 0),  # setosa\n        ([6.0, 2.9, 4.5, 1.5], 1),  # versicolor\n\
+          \        ([6.9, 3.1, 5.4, 2.1], 2),  # virginica\n    ]\n    examples_ok\
+          \ = all(int(tree.predict([x])[0]) == y for x, y in examples)\n\n    # the\
+          \ champion's accuracy is saved next to the model by save_model\n    champion_file\
+          \ = os.path.join(model_dir, \"metrics.json\")\n    champion_acc = -1.0 \
+          \ # no model deployed yet -> any good model wins\n    if os.path.exists(champion_file):\n\
+          \        with open(champion_file) as f:\n            champion_acc = float(json.load(f)[\"\
+          accuracy\"])\n\n    decision = \"deploy\"\n    if accuracy < min_accuracy:\n\
+          \        decision = \"keep\"\n        print(f\"Accuracy {accuracy:.3f} is\
+          \ below the minimum {min_accuracy}\")\n    elif accuracy < champion_acc:\n\
+          \        decision = \"keep\"\n        print(f\"Accuracy {accuracy:.3f} is\
+          \ worse than the current model ({champion_acc:.3f})\")\n    elif not examples_ok:\n\
+          \        decision = \"keep\"\n        print(\"Model gets one of the example\
+          \ flowers wrong\")\n\n    gate_metrics.log_metric(\"challenger_accuracy\"\
+          , accuracy)\n    gate_metrics.log_metric(\"champion_accuracy\", champion_acc)\n\
+          \    gate_metrics.log_metric(\"deploy\", 1 if decision == \"deploy\" else\
+          \ 0)\n    print(f\"Decision: {decision}\")\n    return decision\n\n"
+        image: python:3.10-slim
+    exec-evaluate-model:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - evaluate_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.2'\
+          \ 'numpy==1.26.4' 'scikit-learn==1.4.1.post1' 'joblib==1.3.2'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.3' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef evaluate_model(\n    model: Input[Model],\n    test_set: Input[Dataset],\n\
+          \    max_depth: int,\n    metrics: Output[Metrics],\n) -> float:\n    import\
+          \ joblib\n    import pandas as pd\n    from sklearn.metrics import accuracy_score\n\
+          \n    features = [\"sepal_length\", \"sepal_width\", \"petal_length\", \"\
+          petal_width\"]\n    df = pd.read_csv(test_set.path)\n\n    tree = joblib.load(model.path)\n\
+          \    accuracy = float(accuracy_score(df[\"species\"].values, tree.predict(df[features].values)))\n\
+          \n    # logged metrics show up in the Vertex AI pipeline UI\n    metrics.log_metric(\"\
+          accuracy\", accuracy)\n    metrics.log_metric(\"max_depth\", max_depth)\n\
+          \    print(f\"max_depth={max_depth}: accuracy={accuracy:.3f}\")\n    return\
+          \ accuracy\n\n"
+        image: python:3.10-slim
+    exec-evaluate-model-2:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - evaluate_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.2'\
+          \ 'numpy==1.26.4' 'scikit-learn==1.4.1.post1' 'joblib==1.3.2'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.3' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef evaluate_model(\n    model: Input[Model],\n    test_set: Input[Dataset],\n\
+          \    max_depth: int,\n    metrics: Output[Metrics],\n) -> float:\n    import\
+          \ joblib\n    import pandas as pd\n    from sklearn.metrics import accuracy_score\n\
+          \n    features = [\"sepal_length\", \"sepal_width\", \"petal_length\", \"\
+          petal_width\"]\n    df = pd.read_csv(test_set.path)\n\n    tree = joblib.load(model.path)\n\
+          \    accuracy = float(accuracy_score(df[\"species\"].values, tree.predict(df[features].values)))\n\
+          \n    # logged metrics show up in the Vertex AI pipeline UI\n    metrics.log_metric(\"\
+          accuracy\", accuracy)\n    metrics.log_metric(\"max_depth\", max_depth)\n\
+          \    print(f\"max_depth={max_depth}: accuracy={accuracy:.3f}\")\n    return\
+          \ accuracy\n\n"
+        image: python:3.10-slim
+    exec-evaluate-model-3:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - evaluate_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.2'\
+          \ 'numpy==1.26.4' 'scikit-learn==1.4.1.post1' 'joblib==1.3.2'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.3' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef evaluate_model(\n    model: Input[Model],\n    test_set: Input[Dataset],\n\
+          \    max_depth: int,\n    metrics: Output[Metrics],\n) -> float:\n    import\
+          \ joblib\n    import pandas as pd\n    from sklearn.metrics import accuracy_score\n\
+          \n    features = [\"sepal_length\", \"sepal_width\", \"petal_length\", \"\
+          petal_width\"]\n    df = pd.read_csv(test_set.path)\n\n    tree = joblib.load(model.path)\n\
+          \    accuracy = float(accuracy_score(df[\"species\"].values, tree.predict(df[features].values)))\n\
+          \n    # logged metrics show up in the Vertex AI pipeline UI\n    metrics.log_metric(\"\
+          accuracy\", accuracy)\n    metrics.log_metric(\"max_depth\", max_depth)\n\
+          \    print(f\"max_depth={max_depth}: accuracy={accuracy:.3f}\")\n    return\
+          \ accuracy\n\n"
+        image: python:3.10-slim
+    exec-evaluate-model-4:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - evaluate_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.2'\
+          \ 'numpy==1.26.4' 'scikit-learn==1.4.1.post1' 'joblib==1.3.2'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.3' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef evaluate_model(\n    model: Input[Model],\n    test_set: Input[Dataset],\n\
+          \    max_depth: int,\n    metrics: Output[Metrics],\n) -> float:\n    import\
+          \ joblib\n    import pandas as pd\n    from sklearn.metrics import accuracy_score\n\
+          \n    features = [\"sepal_length\", \"sepal_width\", \"petal_length\", \"\
+          petal_width\"]\n    df = pd.read_csv(test_set.path)\n\n    tree = joblib.load(model.path)\n\
+          \    accuracy = float(accuracy_score(df[\"species\"].values, tree.predict(df[features].values)))\n\
+          \n    # logged metrics show up in the Vertex AI pipeline UI\n    metrics.log_metric(\"\
+          accuracy\", accuracy)\n    metrics.log_metric(\"max_depth\", max_depth)\n\
+          \    print(f\"max_depth={max_depth}: accuracy={accuracy:.3f}\")\n    return\
+          \ accuracy\n\n"
+        image: python:3.10-slim
+    exec-load-data:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - load_data
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.2'\
+          \ 'numpy==1.26.4' 'scikit-learn==1.4.1.post1' 'joblib==1.3.2'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.3' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef load_data(data_path: str, dataset: Output[Dataset]):\n    import\
+          \ pandas as pd\n\n    columns = [\"sepal_length\", \"sepal_width\", \"petal_length\"\
+          , \"petal_width\", \"species\"]\n    df = pd.read_csv(data_path)\n\n   \
+          \ missing = [c for c in columns if c not in df.columns]\n    if missing:\n\
+          \        raise ValueError(f\"Missing columns in dataset: {missing}\")\n\
+          \    # the API expects 0 = setosa, 1 = versicolor, 2 = virginica\n    if\
+          \ not set(df[\"species\"].unique()) <= {0, 1, 2}:\n        raise ValueError(\"\
+          species must be 0, 1 or 2\")\n\n    df = df[columns].dropna()\n    df.to_csv(dataset.path,\
+          \ index=False)\n    print(f\"Loaded {len(df)} rows from {data_path}\")\n\
+          \n"
+        image: python:3.10-slim
+    exec-save-model:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - save_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.2'\
+          \ 'numpy==1.26.4' 'scikit-learn==1.4.1.post1' 'joblib==1.3.2'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.3' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef save_model(best_model: Input[Model], model_dir: str, accuracy:\
+          \ float, max_depth: int) -> str:\n    import json\n    import os\n    import\
+          \ shutil\n    from datetime import datetime, timezone\n\n    version = datetime.now(timezone.utc).strftime(\"\
+          %Y%m%d-%H%M%S\")\n    os.makedirs(os.path.join(model_dir, \"versions\"),\
+          \ exist_ok=True)\n\n    version_path = os.path.join(model_dir, \"versions\"\
+          , f\"model-{version}.joblib\")\n    shutil.copy(best_model.path, version_path)\n\
+          \n    info = {\"accuracy\": accuracy, \"max_depth\": max_depth, \"version\"\
+          : version}\n    with open(os.path.join(model_dir, \"metrics.json\"), \"\
+          w\") as f:\n        json.dump(info, f)\n\n    # written last on purpose:\
+          \ this is the file that triggers the API redeploy\n    shutil.copy(best_model.path,\
+          \ os.path.join(model_dir, \"model.joblib\"))\n\n    print(f\"Saved model\
+          \ {version} to {model_dir}\")\n    return version_path\n\n"
+        image: python:3.10-slim
+    exec-select-best-model:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - select_best_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.2'\
+          \ 'numpy==1.26.4' 'scikit-learn==1.4.1.post1' 'joblib==1.3.2'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.3' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef select_best_model(\n    model_d2: Input[Model],\n    model_d3:\
+          \ Input[Model],\n    model_d4: Input[Model],\n    model_dnone: Input[Model],\n\
+          \    acc_d2: float,\n    acc_d3: float,\n    acc_d4: float,\n    acc_dnone:\
+          \ float,\n    best_model: Output[Model],\n) -> NamedTuple(\"BestModel\"\
+          , [(\"accuracy\", float), (\"max_depth\", int)]):\n    import shutil\n \
+          \   from collections import namedtuple\n\n    # simplest first, so on a\
+          \ tie the first (simplest) one stays the best\n    candidates = [\n    \
+          \    (2, acc_d2, model_d2),\n        (3, acc_d3, model_d3),\n        (4,\
+          \ acc_d4, model_d4),\n        (0, acc_dnone, model_dnone),\n    ]\n    best_depth,\
+          \ best_acc, best = candidates[0]\n    for depth, acc, candidate in candidates[1:]:\n\
+          \        if acc > best_acc:\n            best_depth, best_acc, best = depth,\
+          \ acc, candidate\n\n    shutil.copy(best.path, best_model.path)\n    best_model.metadata[\"\
+          max_depth\"] = best_depth\n    best_model.metadata[\"accuracy\"] = best_acc\n\
+          \    print(f\"Best: max_depth={best_depth or 'None'}, accuracy={best_acc:.3f}\"\
+          )\n\n    BestModel = namedtuple(\"BestModel\", [\"accuracy\", \"max_depth\"\
+          ])\n    return BestModel(best_acc, best_depth)\n\n"
+        image: python:3.10-slim
+    exec-split-data:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - split_data
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.2'\
+          \ 'numpy==1.26.4' 'scikit-learn==1.4.1.post1' 'joblib==1.3.2'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.3' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef split_data(\n    dataset: Input[Dataset],\n    test_size: float,\n\
+          \    random_state: int,\n    train_set: Output[Dataset],\n    test_set:\
+          \ Output[Dataset],\n):\n    import pandas as pd\n    from sklearn.model_selection\
+          \ import train_test_split\n\n    df = pd.read_csv(dataset.path)\n    train_df,\
+          \ test_df = train_test_split(\n        df, test_size=test_size, random_state=random_state,\
+          \ stratify=df[\"species\"]\n    )\n    train_df.to_csv(train_set.path, index=False)\n\
+          \    test_df.to_csv(test_set.path, index=False)\n    print(f\"Train: {len(train_df)}\
+          \ rows, test: {len(test_df)} rows\")\n\n"
+        image: python:3.10-slim
+    exec-train-model:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - train_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.2'\
+          \ 'numpy==1.26.4' 'scikit-learn==1.4.1.post1' 'joblib==1.3.2'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.3' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef train_model(train_set: Input[Dataset], max_depth: int, model:\
+          \ Output[Model]):\n    import joblib\n    import pandas as pd\n    from\
+          \ sklearn.tree import DecisionTreeClassifier\n\n    # same order the API\
+          \ uses when it builds the input for predict()\n    features = [\"sepal_length\"\
+          , \"sepal_width\", \"petal_length\", \"petal_width\"]\n    df = pd.read_csv(train_set.path)\n\
+          \n    depth = None if max_depth == 0 else max_depth\n    tree = DecisionTreeClassifier(max_depth=depth,\
+          \ random_state=0)\n    # .values = plain numbers without column names, like\
+          \ the API sends them\n    tree.fit(df[features].values, df[\"species\"].values)\n\
+          \n    joblib.dump(tree, model.path)\n    model.metadata[\"max_depth\"] =\
+          \ max_depth\n    print(f\"Trained tree with max_depth={depth}\")\n\n"
+        image: python:3.10-slim
+    exec-train-model-2:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - train_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.2'\
+          \ 'numpy==1.26.4' 'scikit-learn==1.4.1.post1' 'joblib==1.3.2'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.3' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef train_model(train_set: Input[Dataset], max_depth: int, model:\
+          \ Output[Model]):\n    import joblib\n    import pandas as pd\n    from\
+          \ sklearn.tree import DecisionTreeClassifier\n\n    # same order the API\
+          \ uses when it builds the input for predict()\n    features = [\"sepal_length\"\
+          , \"sepal_width\", \"petal_length\", \"petal_width\"]\n    df = pd.read_csv(train_set.path)\n\
+          \n    depth = None if max_depth == 0 else max_depth\n    tree = DecisionTreeClassifier(max_depth=depth,\
+          \ random_state=0)\n    # .values = plain numbers without column names, like\
+          \ the API sends them\n    tree.fit(df[features].values, df[\"species\"].values)\n\
+          \n    joblib.dump(tree, model.path)\n    model.metadata[\"max_depth\"] =\
+          \ max_depth\n    print(f\"Trained tree with max_depth={depth}\")\n\n"
+        image: python:3.10-slim
+    exec-train-model-3:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - train_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.2'\
+          \ 'numpy==1.26.4' 'scikit-learn==1.4.1.post1' 'joblib==1.3.2'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.3' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef train_model(train_set: Input[Dataset], max_depth: int, model:\
+          \ Output[Model]):\n    import joblib\n    import pandas as pd\n    from\
+          \ sklearn.tree import DecisionTreeClassifier\n\n    # same order the API\
+          \ uses when it builds the input for predict()\n    features = [\"sepal_length\"\
+          , \"sepal_width\", \"petal_length\", \"petal_width\"]\n    df = pd.read_csv(train_set.path)\n\
+          \n    depth = None if max_depth == 0 else max_depth\n    tree = DecisionTreeClassifier(max_depth=depth,\
+          \ random_state=0)\n    # .values = plain numbers without column names, like\
+          \ the API sends them\n    tree.fit(df[features].values, df[\"species\"].values)\n\
+          \n    joblib.dump(tree, model.path)\n    model.metadata[\"max_depth\"] =\
+          \ max_depth\n    print(f\"Trained tree with max_depth={depth}\")\n\n"
+        image: python:3.10-slim
+    exec-train-model-4:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - train_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.2'\
+          \ 'numpy==1.26.4' 'scikit-learn==1.4.1.post1' 'joblib==1.3.2'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.3' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef train_model(train_set: Input[Dataset], max_depth: int, model:\
+          \ Output[Model]):\n    import joblib\n    import pandas as pd\n    from\
+          \ sklearn.tree import DecisionTreeClassifier\n\n    # same order the API\
+          \ uses when it builds the input for predict()\n    features = [\"sepal_length\"\
+          , \"sepal_width\", \"petal_length\", \"petal_width\"]\n    df = pd.read_csv(train_set.path)\n\
+          \n    depth = None if max_depth == 0 else max_depth\n    tree = DecisionTreeClassifier(max_depth=depth,\
+          \ random_state=0)\n    # .values = plain numbers without column names, like\
+          \ the API sends them\n    tree.fit(df[features].values, df[\"species\"].values)\n\
+          \n    joblib.dump(tree, model.path)\n    model.metadata[\"max_depth\"] =\
+          \ max_depth\n    print(f\"Trained tree with max_depth={depth}\")\n\n"
+        image: python:3.10-slim
+pipelineInfo:
+  description: Trains Decision Trees on Iris, checks the best one and saves it for
+    the API.
+  name: iris-decision-tree-training
+root:
+  dag:
+    tasks:
+      check-model:
+        cachingOptions: {}
+        componentRef:
+          name: comp-check-model
+        dependentTasks:
+        - select-best-model
+        inputs:
+          artifacts:
+            best_model:
+              taskOutputArtifact:
+                outputArtifactKey: best_model
+                producerTask: select-best-model
+          parameters:
+            accuracy:
+              taskOutputParameter:
+                outputParameterKey: accuracy
+                producerTask: select-best-model
+            min_accuracy:
+              componentInputParameter: min_accuracy
+            model_dir:
+              componentInputParameter: model_dir
+        taskInfo:
+          name: check-model
+      condition-1:
+        componentRef:
+          name: comp-condition-1
+        dependentTasks:
+        - check-model
+        - select-best-model
+        inputs:
+          artifacts:
+            pipelinechannel--select-best-model-best_model:
+              taskOutputArtifact:
+                outputArtifactKey: best_model
+                producerTask: select-best-model
+          parameters:
+            pipelinechannel--check-model-Output:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: check-model
+            pipelinechannel--model_dir:
+              componentInputParameter: model_dir
+            pipelinechannel--select-best-model-accuracy:
+              taskOutputParameter:
+                outputParameterKey: accuracy
+                producerTask: select-best-model
+            pipelinechannel--select-best-model-max_depth:
+              taskOutputParameter:
+                outputParameterKey: max_depth
+                producerTask: select-best-model
+        taskInfo:
+          name: model-is-good-enough
+        triggerPolicy:
+          condition: inputs.parameter_values['pipelinechannel--check-model-Output']
+            == 'deploy'
+      evaluate-model:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-evaluate-model
+        dependentTasks:
+        - split-data
+        - train-model
+        inputs:
+          artifacts:
+            model:
+              taskOutputArtifact:
+                outputArtifactKey: model
+                producerTask: train-model
+            test_set:
+              taskOutputArtifact:
+                outputArtifactKey: test_set
+                producerTask: split-data
+          parameters:
+            max_depth:
+              runtimeValue:
+                constant: 2.0
+        taskInfo:
+          name: evaluate-depth-2
+      evaluate-model-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-evaluate-model-2
+        dependentTasks:
+        - split-data
+        - train-model-2
+        inputs:
+          artifacts:
+            model:
+              taskOutputArtifact:
+                outputArtifactKey: model
+                producerTask: train-model-2
+            test_set:
+              taskOutputArtifact:
+                outputArtifactKey: test_set
+                producerTask: split-data
+          parameters:
+            max_depth:
+              runtimeValue:
+                constant: 3.0
+        taskInfo:
+          name: evaluate-depth-3
+      evaluate-model-3:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-evaluate-model-3
+        dependentTasks:
+        - split-data
+        - train-model-3
+        inputs:
+          artifacts:
+            model:
+              taskOutputArtifact:
+                outputArtifactKey: model
+                producerTask: train-model-3
+            test_set:
+              taskOutputArtifact:
+                outputArtifactKey: test_set
+                producerTask: split-data
+          parameters:
+            max_depth:
+              runtimeValue:
+                constant: 4.0
+        taskInfo:
+          name: evaluate-depth-4
+      evaluate-model-4:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-evaluate-model-4
+        dependentTasks:
+        - split-data
+        - train-model-4
+        inputs:
+          artifacts:
+            model:
+              taskOutputArtifact:
+                outputArtifactKey: model
+                producerTask: train-model-4
+            test_set:
+              taskOutputArtifact:
+                outputArtifactKey: test_set
+                producerTask: split-data
+          parameters:
+            max_depth:
+              runtimeValue:
+                constant: 0.0
+        taskInfo:
+          name: evaluate-depth-none
+      load-data:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-load-data
+        inputs:
+          parameters:
+            data_path:
+              componentInputParameter: data_path
+        taskInfo:
+          name: load-data
+      select-best-model:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-select-best-model
+        dependentTasks:
+        - evaluate-model
+        - evaluate-model-2
+        - evaluate-model-3
+        - evaluate-model-4
+        - train-model
+        - train-model-2
+        - train-model-3
+        - train-model-4
+        inputs:
+          artifacts:
+            model_d2:
+              taskOutputArtifact:
+                outputArtifactKey: model
+                producerTask: train-model
+            model_d3:
+              taskOutputArtifact:
+                outputArtifactKey: model
+                producerTask: train-model-2
+            model_d4:
+              taskOutputArtifact:
+                outputArtifactKey: model
+                producerTask: train-model-3
+            model_dnone:
+              taskOutputArtifact:
+                outputArtifactKey: model
+                producerTask: train-model-4
+          parameters:
+            acc_d2:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: evaluate-model
+            acc_d3:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: evaluate-model-2
+            acc_d4:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: evaluate-model-3
+            acc_dnone:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: evaluate-model-4
+        taskInfo:
+          name: select-best-model
+      split-data:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-split-data
+        dependentTasks:
+        - load-data
+        inputs:
+          artifacts:
+            dataset:
+              taskOutputArtifact:
+                outputArtifactKey: dataset
+                producerTask: load-data
+          parameters:
+            random_state:
+              componentInputParameter: random_state
+            test_size:
+              componentInputParameter: test_size
+        taskInfo:
+          name: split-data
+      train-model:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-train-model
+        dependentTasks:
+        - split-data
+        inputs:
+          artifacts:
+            train_set:
+              taskOutputArtifact:
+                outputArtifactKey: train_set
+                producerTask: split-data
+          parameters:
+            max_depth:
+              runtimeValue:
+                constant: 2.0
+        taskInfo:
+          name: train-depth-2
+      train-model-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-train-model-2
+        dependentTasks:
+        - split-data
+        inputs:
+          artifacts:
+            train_set:
+              taskOutputArtifact:
+                outputArtifactKey: train_set
+                producerTask: split-data
+          parameters:
+            max_depth:
+              runtimeValue:
+                constant: 3.0
+        taskInfo:
+          name: train-depth-3
+      train-model-3:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-train-model-3
+        dependentTasks:
+        - split-data
+        inputs:
+          artifacts:
+            train_set:
+              taskOutputArtifact:
+                outputArtifactKey: train_set
+                producerTask: split-data
+          parameters:
+            max_depth:
+              runtimeValue:
+                constant: 4.0
+        taskInfo:
+          name: train-depth-4
+      train-model-4:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-train-model-4
+        dependentTasks:
+        - split-data
+        inputs:
+          artifacts:
+            train_set:
+              taskOutputArtifact:
+                outputArtifactKey: train_set
+                producerTask: split-data
+          parameters:
+            max_depth:
+              runtimeValue:
+                constant: 0.0
+        taskInfo:
+          name: train-depth-none
+  inputDefinitions:
+    parameters:
+      data_path:
+        defaultValue: /gcs/group7-iris-data/iris.csv
+        isOptional: true
+        parameterType: STRING
+      min_accuracy:
+        defaultValue: 0.9
+        isOptional: true
+        parameterType: NUMBER_DOUBLE
+      model_dir:
+        defaultValue: /gcs/group7-iris-models/model
+        isOptional: true
+        parameterType: STRING
+      random_state:
+        defaultValue: 42.0
+        isOptional: true
+        parameterType: NUMBER_INTEGER
+      test_size:
+        defaultValue: 0.2
+        isOptional: true
+        parameterType: NUMBER_DOUBLE
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.17.3

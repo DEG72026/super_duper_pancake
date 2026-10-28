@@ -5,28 +5,22 @@ substitutions:
   _API_IMAGE: iris-api
 
 steps:
-  
-# Optional test step.
-  
-# Uncomment when tests and dependencies are ready.
-  
-# - name: 'python:3.10-slim'
-  
-#   entrypoint: 'bash'
-  
-#   args:
-  
-#     - '-c'
-  
-#     - |
-  
-#       pip install -r api/requirements.txt
-  
-#       pip install pytest
-  
-#       pytest tests/
 
-  
+# Copy trained model from Cloud Storage
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: ['cp', 'gs://group7-iris-models/model/model.joblib', 'api/model.pkl']
+   
+
+# Run unit tests before building
+  - name: 'python:3.10-slim'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        pip install -r tests/requirements.txt
+        pytest tests/
+   
+   
 # Build API Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args:
@@ -65,3 +59,7 @@ steps:
       ]
 
 timeout: '900s'
+
+# Logging option to fix service account error
+options:
+  logging: CLOUD_LOGGING_ONLY

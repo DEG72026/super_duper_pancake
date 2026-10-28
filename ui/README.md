@@ -3,9 +3,12 @@
 ## Current status
 
 The Flask UI accepts four flower measurements in centimetres.
-It validates the input and displays the accepted measurements.
+It validates the input, displays the accepted measurements and sends valid
+measurements to the prediction API. The predicted species is displayed when
+the API returns a valid response.
 
-The prediction API is not connected yet. No model predictions are made.
+The API connection has been tested locally. Real model predictions and the
+complete cloud deployment have not yet been verified.
 
 ## Input validation
 
@@ -25,12 +28,31 @@ The browser and Python server use the same limits.
 These checks catch some unit errors, but cannot detect every incorrect input.
 Submitted values remain visible after submission.
 
+## API configuration and behaviour
+
+Set `PREDICTION_API_URL` to the prediction API's base URL, for example
+`http://127.0.0.1:8000`. The UI appends `/predict`; a URL already ending in
+`/predict` is also accepted. Set the variable before starting the UI and restart
+the application after changing it.
+
+The UI sends the four feature names from the table above as a JSON object
+containing numeric values. It expects `class_id` and `class_name` in the response,
+with the mapping 0 = setosa, 1 = versicolor, 2 = virginica.
+
+Each API request uses a 10-second timeout. The UI displays a clear error if the
+API URL is missing, the request times out, the API is unreachable, the API returns
+an HTTP error, or its response is invalid. Submitted measurements remain visible.
+
+The `/health` endpoint reports whether the UI server can respond. It does not
+check the prediction API or model availability.
+
 ## Run locally
 
 Run from the repository root with the project virtual environment active:
 
 ```powershell
 python -m pip install -r ui/requirements.txt
+$env:PREDICTION_API_URL = "http://127.0.0.1:8000"
 python ui/app.py
 ```
 
@@ -44,16 +66,43 @@ Run from the repository root:
 
 ```powershell
 docker build -t iris-ui:local ./ui
-docker run --rm --name iris-ui-test -p 127.0.0.1:5002:8080 iris-ui:local
+docker run -d --rm --name iris-ui-test -p 127.0.0.1:5002:8080 -e PREDICTION_API_URL=http://host.docker.internal:8000 iris-ui:local
 ```
 
 Open http://127.0.0.1:5002.
+
+This Docker Desktop example assumes the API is reachable on port 8000 on the
+Windows host. `host.docker.internal` lets the UI container reach that host.
+For a deployed API, pass its base URL instead. In Cloud Run, configure
+`PREDICTION_API_URL` as a service environment variable.
 
 To stop the container, run in another terminal:
 
 ```powershell
 docker stop iris-ui-test
 ```
+
+## Start the API locally for integration testing
+
+Run from the repository root with Docker Desktop running:
+
+```powershell
+docker build -t iris-api:local ./api
+docker run -d --rm --name iris-api-test -p 127.0.0.1:8000:8080 iris-api:local
+```
+
+Start the UI using either method above and submit valid measurements. To test
+connection failure handling, stop the API and submit again:
+
+```powershell
+docker stop iris-api-test
+```
+
+The UI should display an API error and preserve the submitted measurements.
+Restart the API using the same `docker run` command when needed.
+
+The reviewed local API returns a fixed `setosa` response when no model is loaded.
+This verifies the connection and display, but does not verify model predictions.
 
 ## Run doctests
 
@@ -69,18 +118,28 @@ Or inside the built image:
 docker run --rm iris-ui:local python -m doctest -v app.py
 ```
 
+The doctest for a valid form submission uses a simulated API response, so the
+API does not need to be running for doctests. These tests alone do not verify
+live HTTP communication.
+
 ## Verification completed
 
 - Local form submission checked.
 - Docker image built successfully.
 - Form submission through the Docker container checked.
-- All doctests passed inside the container.
+- All 21 doctests passed inside the UI container.
+- Local UI-to-API communication checked, including with the UI in Docker.
+- Stopping the local API produced the expected error and preserved the input.
 - Dependencies pinned to the versions from the tested image.
 
 ## Remaining integration work
 
-- Agree on the prediction API request and response formats with Himey.
-- Add a configurable prediction API URL and request timeout.
-- Display predictions and handle API failures.
+- Verify real predictions from the trained model; the local test used the API's
+  fixed fallback response.
+- Resolve access to the deployed API with Himey/Charlotte. At the time of testing,
+  opening its `/health` endpoint returned `Forbidden`.
+- Configure the actual API base URL in the UI's Cloud Run environment.
 - Coordinate Cloud Build and Cloud Run deployment with Charlotte.
-- Test the complete deployed application.
+- Test the complete deployed application, including API authentication if required.
+
+The current UI does not send an authentication token to the API.

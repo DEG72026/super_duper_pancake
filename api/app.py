@@ -108,3 +108,4 @@ def predict(payload: IrisFeatures):
         "class_id": prediction_idx,
         "class_name": class_name
     }
+

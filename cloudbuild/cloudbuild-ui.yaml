@@ -3,7 +3,8 @@ substitutions:
   _AR_REPO: mlops-repo-group7
   _UI_SERVICE: iris-ui
   _UI_IMAGE: iris-ui
-  _API_URL: https://REPLACE-WITH-API-URL
+  _API_URL: https://iris-api-446386690103.europe-west4.run.app
+  _UI_URL: https://iris-ui-446386690103.europe-west4.run.app
 
 steps:
   
@@ -47,3 +48,7 @@ steps:
       ]
 
 timeout: '900s'
+
+# Logging option to fix service account error
+options:
+  logging: CLOUD_LOGGING_ONLY
