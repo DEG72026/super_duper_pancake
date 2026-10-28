@@ -46,7 +46,7 @@ CLASS_MAPPING = {
     2: "virginica"
 }
 
-# Load local model if available (Day 3+), otherwise fallback to mock prediction
+# Load local model 
 MODEL_PATH = os.getenv("MODEL_PATH", "model.pkl")
 model = None
 
@@ -67,14 +67,16 @@ def health_check():
     """Health check endpoint to verify service status."""
     return {
         "status": "healthy",
-        "model_loaded": model is not None
+        "model_loaded": model is not None,
+        "model_version": model_info.get("version"),
+        "model_accuracy": model_info.get("accuracy"),
     }
 
 @app.post("/predict", status_code=status.HTTP_200_OK)
 def predict(payload: IrisFeatures):
     """Receive flower features, validate limits, and return predicted Iris class."""
     try:
-        # Validate against Marc's approved UI limits
+        # Validate against approved UI limits
         payload.validate_ranges()
     except ValueError as e:
         raise HTTPException(
@@ -100,12 +102,13 @@ def predict(payload: IrisFeatures):
                 detail=f"Prediction error: {str(e)}"
             )
     else:
-        # Mock prediction fallback if model.pkl isn't wired up yet (Day 2 goal)
-        prediction_idx = 0
-        class_name = CLASS_MAPPING[prediction_idx]
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Model not loaded"
+        )
+
 
     return {
         "class_id": prediction_idx,
         "class_name": class_name
     }
-
