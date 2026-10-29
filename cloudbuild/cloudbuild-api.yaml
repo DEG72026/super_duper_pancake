@@ -13,7 +13,7 @@ steps:
       - '-c'
       - |
         pip install -r api/requirements.txt pytest
-        python -m pytest test/
+        python -m pytest api_test/
 
 
 # Build API Docker image
