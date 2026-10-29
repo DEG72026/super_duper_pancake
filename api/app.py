@@ -130,3 +130,4 @@ def predict(payload: IrisFeatures):
         "class_name": class_name
     }
     #Dankejwel Martijn voor Appelflop
+#Banana
